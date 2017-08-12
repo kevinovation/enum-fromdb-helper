@@ -2,54 +2,52 @@
 using System;
 using System.Linq;
 
-namespace Cfcal.Generique.Metier.Extensions
+namespace Extensions
 {
     public static class EnumExtension
     {
 
-        /// <history>CFCAL/KBL, 11/08/2017 Création</history>
         /// <summary>
-        /// Permet de retourner l'attribut personnalisé passé en paramètre d'une énumération.
+        /// Return the passed custom attribute.
         /// </summary>
-        /// <typeparam name="TAttribute">L'attribut personnalisé recherché</typeparam>
-        /// <param name="peEnum">L'énumération</param>
-        /// <returns>L'attribut TAttribute ou null si non trouvé</returns>
-        /// <exception cref="ArgumentNullException">Si peEnum est null</exception>
-        public static TAttribute RetournerAttribut<TAttribute>(this Enum peEnum) where TAttribute : Attribute
+        /// <typeparam name="TAttribute">The wanted custom attribute</typeparam>
+        /// <param name="peEnum">The enum</param>
+        /// <returns> TAttribute or null if not found</returns>
+        /// <exception cref="ArgumentNullException">If peEnum is null</exception>
+        public static TAttribute ReturnAttribute<TAttribute>(this Enum peEnum) where TAttribute : Attribute
         {
             //>Declaration
-            Type loTypeEnum = default(Type);
-            string lstrNomEnum = null;
+            Type loEnumType = default(Type);
+            string lstrEnumName = null;
 
             //>Vérification
             if (peEnum == null)
                 throw new ArgumentNullException();
 
             //>Traitement
-            loTypeEnum = peEnum.GetType();
-            lstrNomEnum = Enum.GetName(loTypeEnum, peEnum);
+            loEnumType = peEnum.GetType();
+            lstrEnumName = Enum.GetName(loEnumType, peEnum);
 
             //>Retour
-            return loTypeEnum.GetField(lstrNomEnum).GetCustomAttributes(true).OfType<TAttribute>().SingleOrDefault();
+            return loEnumType.GetField(lstrEnumName).GetCustomAttributes(true).OfType<TAttribute>().SingleOrDefault();
         }
 
-        /// <history>CFCAL/KBL, 11/08/2017 Création</history>
         /// <summary>
-        /// Permet de retourner le libelle d'une enum
+        /// Return the enum's libelle
         /// </summary>
-        /// <param name="peEnum">La valeur de l'enum</param>
-        /// <returns>Le libelle de la valeur ou une chaine vide si non existant</returns>
-        /// <exception cref="NotSupportedException">Levée si <param name="peEnum"> ne contient pas d'attribut <see cref="EnumLibelleAttribute"/></exception>
-        public static string RetournerLibelle(this Enum peEnum)
+        /// <param name="peEnum">The enum</param>
+        /// <returns>The enum's libelle</returns>
+        /// <exception cref="NotSupportedException">Throw if <param name="peEnum"> doesn't have attribute <see cref="EnumLibelleAttribute"/></exception>
+        public static string ReturnLibelle(this Enum peEnum)
         {
             //>Traitement
-            var loEnumLibelleAttribute = peEnum.RetournerAttribut<EnumLibelleAttribute>();
+            var loEnumLibelleAttribute = peEnum.ReturnAttribute<EnumLibelleAttribute>();
 
             if (loEnumLibelleAttribute == null)
                 throw new NotSupportedException();
 
             //>Retour
-            return peEnum.RetournerAttribut<EnumLibelleAttribute>().Libelle;
+            return loEnumLibelleAttribute.Libelle;
         }
     }
 }
