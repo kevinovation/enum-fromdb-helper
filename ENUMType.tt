@@ -1,0 +1,119 @@
+﻿<#@ template language="C#" debug="true" hostspecific="True" #>
+<#@ output extension=".cs"#>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Data.SqlClient" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Text.RegularExpressions" #>
+
+<#
+
+var connectionString = "X";
+var sourceTableName = "Type";
+var sourceValueColumnName = "CodeType";
+var sourceTypeNameColumnName = "Libelle";
+var flagsAttribute = false;
+#>
+
+<# if(flagsAttribute) { WriteLine("using System;"); } #>
+using System.Runtime.Serialization;
+
+namespace <#=System.Runtime.Remoting.Messaging.CallContext.LogicalGetData("NamespaceHint")#>
+{
+<# if(flagsAttribute) { WriteLine("\t[Flags]"); }
+	WriteLine("\t///<summary>");
+	WriteLine("\t///Enumeration de la table de type " + sourceTableName);
+	WriteLine("\t///</summary>");
+	WriteLine("\t///");
+ #>
+	public enum <#=Path.GetFileNameWithoutExtension(Host.TemplateFile)#>
+	{
+<#
+	try {
+		using (SqlConnection connection = new SqlConnection(connectionString))
+		{
+			SqlCommand command = new SqlCommand("SELECT " + sourceValueColumnName + ", " + sourceTypeNameColumnName + " FROM " + sourceTableName + " ORDER BY " + sourceValueColumnName, connection);
+			connection.Open();
+			SqlDataReader reader = command.ExecuteReader();
+
+			if (reader.HasRows)
+			{
+				var i = 0;
+				while (reader.Read())
+				{
+					if(i > 0) {
+						WriteLine(",");
+					}
+					i++;
+					
+					string libelle = reader[sourceTypeNameColumnName].ToString();
+					var value = reader[sourceValueColumnName].ToString();
+					string name = libelle;
+
+					if(!String.IsNullOrWhiteSpace(name))
+					{
+						StringBuilder sb = new StringBuilder(name.Length);
+
+						if (name.Length < 2)
+							name = name.ToUpper();
+
+						name = RemplacerCaracteresAccentues(name);
+						name = name.Replace("'", " ");
+
+						WriteLine("\t\t// " + name);
+						string[] words = name.Split(new char[] { }, StringSplitOptions.RemoveEmptyEntries);
+						
+						foreach (string word in words)
+							sb.Append(string.Format("{0}{1}", word.Substring(0, 1).ToUpper(), word.Substring(1)));
+						name = sb.ToString();
+					}
+
+					Write("\t[EnumLibelleAttribute({0})]}", libelle);
+					Write("\t{0} = {1}", name, value);
+				}
+				WriteLine("");
+			}
+			else
+			{
+				WriteLine("\t\t//No data found in source table");
+			}
+			reader.Close();
+		}
+	} catch(Exception ex) {
+		WriteLine("\t\t/*");
+		WriteLine("\t\tError running template:");
+		WriteLine("\t\t" + ex.Message);
+		WriteLine("\t\t*/");
+	}
+	#>
+	}
+}
+
+
+<#+
+public string RemplacerCaracteresAccentues(string pstrChaine)
+{
+    //>Declaration
+    string CHAINE_AVEC_ACCENT = "ÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÌÍÎÏìíîïÙÚÛÜùúûüÿÑñÇç";
+	string CHAINE_SANS_ACCENT = "AAAAAAaaaaaaOOOOOOooooooEEEEeeeeIIIIiiiiUUUUuuuuyNnCc";
+	
+	int li32Compteur = 0;
+    string lstrLettre = string.Empty;
+
+    //>Traitement
+    for (li32Compteur = 1; li32Compteur < CHAINE_AVEC_ACCENT.Length; li32Compteur++)
+    {
+        lstrLettre = CHAINE_AVEC_ACCENT.Substring(li32Compteur, 1);
+        if (pstrChaine.Contains(lstrLettre))
+        {
+            pstrChaine = pstrChaine.Replace(lstrLettre, CHAINE_SANS_ACCENT.Substring(li32Compteur, 1));
+        }
+    }
+
+    //>Retour
+    return pstrChaine;
+}
+#>
