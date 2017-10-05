@@ -62,6 +62,9 @@ namespace <#=System.Runtime.Remoting.Messaging.CallContext.LogicalGetData("Names
 
 						name = RemplacerCaracteresAccentues(name);
 						name = name.Replace("'", " ");
+						name = name.Replace("-", "_");
+						name = name.Replace("(", "");
+						name = name.Replace(")", "");
 
 						WriteLine("\t\t// " + name);
 						string[] words = name.Split(new char[] { }, StringSplitOptions.RemoveEmptyEntries);
